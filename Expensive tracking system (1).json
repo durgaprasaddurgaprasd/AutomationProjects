@@ -1,0 +1,268 @@
+{
+  "name": "Expensive tracking system",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0addf5f4-1c34-4592-8d5f-431f429bd7a9",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        576,
+        64
+      ],
+      "id": "757f27f2-581c-468c-9b20-d5b4bf0e457b",
+      "name": "Webhook",
+      "webhookId": "0addf5f4-1c34-4592-8d5f-431f429bd7a9",
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "16ba77cc-b38f-4c5d-98d2-3228e6719e17",
+              "name": "body.message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        64
+      ],
+      "id": "4a6a7b67-2242-49da-8a5d-46a83dc2cbf1",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Instruction:\nYou are an expert financial data extractor. Parse the transaction message and extract all relevant information accurately.\n\nMessage Examples:\n1)Rs. 300.00 debited from Airtel Payments Bank a/c Txn ID 257655261841 Bal:38.37\n2)Rs. 1200 debited from HDFC Bank a/c Txn ID 9876543210 Bal:5000.75\nOutput Format (JSON only, no extra text):\n{\n  \"date\": \"2025-11-07\",\n  \"money\": 300.0\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1024,
+        64
+      ],
+      "id": "9f750929-4f11-472a-8cb9-0569cc380c76",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        288
+      ],
+      "id": "35e5fe45-ec34-4739-905e-288163c5f94a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YO9FxxWjP6SLNeqr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1B4jH2Wi0WZpWC-YOPrSYPrgf1ooR7JnIcbuvCApcd5s",
+          "mode": "list",
+          "cachedResultName": "Monthly expensive Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B4jH2Wi0WZpWC-YOPrSYPrgf1ooR7JnIcbuvCApcd5s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B4jH2Wi0WZpWC-YOPrSYPrgf1ooR7JnIcbuvCApcd5s/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Money": "={{$json[\"output\"][\"money\"]}}",
+            "Date": "={{$json[\"output\"][\"date\"]}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Money",
+              "displayName": "Money",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1376,
+        64
+      ],
+      "id": "9fd42ad1-8e4f-4da3-9a5b-3910b8bce4e2",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "z0waLgAh59vpTNvT",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"date\": \"2025-11-07\",\n  \"money\": 300.0\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        272
+      ],
+      "id": "301ec0ed-7749-49d9-a5fd-36a06db5d7cc",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "posb.app.n8n.cloud",
+            "user-agent": "macrodroid/5.57.6",
+            "content-length": "147",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "2401:4900:9707:6eb7:dc1c:73f6:86a0:2202",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "IN",
+            "cf-ray": "99ab3338d2dd3a99-BOM",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json; charset=utf-8",
+            "x-forwarded-for": "2401:4900:9707:6eb7:dc1c:73f6:86a0:2202, 172.69.179.178",
+            "x-forwarded-host": "posb.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-92-7c777649cb-hph2q",
+            "x-is-trusted": "yes",
+            "x-real-ip": "2401:4900:9707:6eb7:dc1c:73f6:86a0:2202"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": "Rs. 1.00 debited from Airtel Payments Bank a/c Txn ID 259406498231 Bal:13.15 Call 180023400 for help",
+            "number": "AD-AIRBNK-S"
+          },
+          "webhookUrl": "https://posb.app.n8n.cloud/webhook/0addf5f4-1c34-4592-8d5f-431f429bd7a9",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5d4e9ba9-5d98-4c86-a9ea-91c531513603",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b3cb100115e43387ad8ccc7b5ac14b8d36b26ded166f429f63161f9148e250e9"
+  },
+  "id": "oqEdoe6UJorPViNY",
+  "tags": []
+}

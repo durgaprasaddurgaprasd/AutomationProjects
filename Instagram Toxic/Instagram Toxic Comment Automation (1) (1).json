@@ -1,0 +1,270 @@
+{
+  "name": "Instagram Toxic Comment Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        48
+      ],
+      "id": "f98bd4a6-db52-400a-8afd-e8f328b785de",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "={{ $json.id }}",
+        "edge": "comments",
+        "allowUnauthorizedCerts": true,
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "text"
+              },
+              {
+                "name": "from"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        592,
+        64
+      ],
+      "id": "6615b0b3-6bbf-462e-b3ee-60693088c0d3",
+      "name": "Facebook Graph API1",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "7hFBkgMtY8VevXCu",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Flatten all post objects and extract IDs\nconst postIds = items\n  .map(item => item.json.data)   // get the data array from each item\n  .flat()                        // flatten into a single array\n  .map(post => post.id);          // extract IDs\n\n// Return each ID as a separate item\nreturn postIds.map(id => ({ json: { id } }));\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        48
+      ],
+      "id": "3b45109d-26c8-4d82-8f20-2cf4684168ed",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst comments = items\n  .map(item => item.json.data || [])   // flatten comment arrays from Instagram\n  .flat()\n  .map(comment => ({\n    json: {\n      comment_id: comment.id,                 // comment ID\n      text: comment.text,                     // comment text\n      username: comment.from?.username || \"Unknown\", // sender username\n      user_id: comment.from?.id || \"Unknown\"  // sender ID (used to send message later)\n    }\n  }));\n\nreturn comments;  // returns one item per comment\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        48
+      ],
+      "id": "f0c5ed14-ff28-4e55-b13a-58c4ba876d2a",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{\"https://graph.facebook.com/v23.0/\" + $json[\"comment_id\"] + \"?access_token=EAALI6dZADp48BPjbTqZBnd3Q3MV5hhPZAy9SJalm01fHlsSnfJSa6B4id8ri2qnRZCFoj3BtOe0ovIsSpo2aJnlh0v4DJd6ke87ClIK6EDH9oxjvr5INNWhZCxpCWnXqi92gqiNLzreX1RsPGZA7dkHlgisvHZAgx04EOVVGjuEfZABFADZAYXYzQZAqHvt3EQZCrrp\"}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        64
+      ],
+      "id": "0df61021-9062-41a5-af54-8bef48893be6",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "17841474838586740",
+        "edge": "media",
+        "allowUnauthorizedCerts": true,
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "id"
+              },
+              {
+                "name": "username"
+              },
+              {
+                "name": "text"
+              },
+              {
+                "name": "timestamp"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        192,
+        64
+      ],
+      "id": "7efeb844-8ed7-4032-9365-d23f247ec82b",
+      "name": "Facebook Graph API2",
+      "alwaysOutputData": false,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "7hFBkgMtY8VevXCu",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://beth-unsung-reprehensively.ngrok-free.dev/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"comment_id\": \"{{ $json.comment_id }}\",\n  \"text\": \"{{ $json.text }}\",\n  \"username\": \"{{ $json.username }}\",\n  \"user_id\": \"{{ $json.user_id }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        64
+      ],
+      "id": "20ffe867-61bd-4b0f-af32-44f20c906f46",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst filteredItems = items\n  .filter((item) => item?.json?.Toxic> 10)\n  .map((item) => ({\n    comment_id: item?.json?.comment_id,\n    text: item?.json?.text,\n    username: item?.json?.username,\n    userid:item?.json?.user_id,\n    toxicity_score: item?.json?.Toxic,\n  }));\n\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        48
+      ],
+      "id": "ebc08bd9-7552-44b1-a94c-b5acf0b11956",
+      "name": "Code in JavaScript2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Graph API1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Graph API2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9851a76c-8322-463b-b90c-c51ed38d3c38",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f3aed84f44ecbf4af86ae15cd28eaabd3bfa29fff3ecfc6860ce9ae11659998f"
+  },
+  "id": "RjHXNN3uVG0ajgYr",
+  "tags": []
+}
